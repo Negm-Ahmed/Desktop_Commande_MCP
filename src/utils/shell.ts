@@ -110,10 +110,30 @@ function getRepairedPathExt(): string {
   return current;
 }
 
+/** A PowerShell 7 module folder: ...\PowerShell\Modules or ...\PowerShell\<version>\Modules */
+const POWERSHELL7_MODULES_DIR = /(^|[\\/])powershell[\\/](\d+(\.\d+)*[\\/])?modules[\\/]?$/i;
+
+/**
+ * PSModulePath without its PowerShell 7 module folders; undefined when none
+ * are left. A server started from a PowerShell 7 session, or by a tool that
+ * bundles PowerShell 7, passes such a value on, and Windows PowerShell 5.1
+ * (powershell.exe, the default shell) then loads PowerShell 7's
+ * Microsoft.PowerShell.Utility, can't use it, and loses built-in cmdlets such
+ * as Get-FileHash ("not recognized"). Windows PowerShell and custom folders
+ * keep their order. pwsh adds its own folders back when it starts.
+ */
+export function withoutPowerShell7ModulePaths(value: string): string | undefined {
+  const kept = value.split(';').filter(entry => entry.trim() !== '' && !POWERSHELL7_MODULES_DIR.test(entry.trim()));
+  return kept.length > 0 ? kept.join(';') : undefined;
+}
+
 /**
  * The environment for what Desktop Commander runs for the AI (start_process
  * commands, node:local code): the server's own, with on Windows what a
  * client's launch broke or left out put back. PATHEXT is repaired (#481).
+ * PowerShell 7 module folders are taken out of PSModulePath, so Windows
+ * PowerShell keeps its cmdlets (see withoutPowerShell7ModulePaths); with none
+ * left the variable is removed and Windows PowerShell builds its default.
  * ProgramData is set when missing: a client on the MCP SDK's default
  * environment leaves it out, and Windows OpenSSH (ssh, scp, sftp, ssh-keygen)
  * exits 255 without a word when it's unset (#702). Windows keeps it on the
@@ -128,6 +148,13 @@ export function getCommandEnvironment(): NodeJS.ProcessEnv {
     const drive = process.env.SystemDrive || path.win32.parse(process.env.SystemRoot ?? '').root;
     if (!process.env.ProgramData && drive) {
       env.ProgramData = path.win32.join(drive, '\\', 'ProgramData');
+    }
+    const modulePath = process.env.PSModulePath;
+    if (modulePath !== undefined) {
+      const key = Object.keys(env).find(k => k.toUpperCase() === 'PSMODULEPATH') ?? 'PSModulePath';
+      const cleaned = withoutPowerShell7ModulePaths(modulePath);
+      if (cleaned === undefined) delete env[key];
+      else env[key] = cleaned;
     }
   }
   return env;
