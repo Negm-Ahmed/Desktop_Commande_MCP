@@ -4,6 +4,7 @@ import { DEFAULT_COMMAND_TIMEOUT } from './config.js';
 import { configManager } from './config-manager.js';
 import {capture} from "./utils/capture.js";
 import { analyzeProcessState } from './utils/process-detection.js';
+import { buildShellEnv } from './utils/shell-env.js';
 
 interface CompletedSession {
   pid: number;
@@ -66,12 +67,11 @@ export class TerminalManager {
       console.log(`Enhanced SSH command: ${enhancedCommand}`);
     }
     
-    const spawnOptions: any = { 
+    const spawnOptions: any = {
       shell: shellToUse,
-      env: {
-        ...process.env,
-        TERM: 'xterm-256color'  // Better terminal compatibility
-      }
+      // TERM for better terminal compatibility; on Windows, PowerShell 7 module folders are
+      // removed from PSModulePath so Windows PowerShell 5.1 cmdlets keep working (see shell-env.ts)
+      env: buildShellEnv(process.env, shellToUse)
     };
     
     // Spawn the process with an empty array of arguments and our options
