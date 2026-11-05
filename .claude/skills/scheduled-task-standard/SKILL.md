@@ -15,11 +15,11 @@ A scheduled task runs unattended in a fresh cloud container. It must be **self-c
 
 ### Connectors
 - [ ] Attach **only** the connectors the prompt uses. Each extra connector is one more failure point and broadens what the task can reach.
-  - ATP processing needs Google Drive and Gmail.
-  - Site Pulse needs Microsoft 365.
+  - An RTR tracker-health check (reads the T&C tracker and Writer run results on SharePoint, mails the summary) needs Microsoft 365 only.
+  - An RTR correspondence digest (TABCOMM / Parsons–SAPL / ICAD mail) needs Microsoft 365 only. Do not add Google Drive or Gmail "just in case".
 
 ### Secrets
-- [ ] **No tokens, API keys or passwords in the prompt text.** Store them as environment variables on the environment and reference them as `$ULTRAMSG_TOKEN`.
+- [ ] **No tokens, API keys or passwords in the prompt text.** Store them as environment variables on the environment and reference them by name, for example `$SERVICE_TOKEN`.
 
 ### Schedule
 - [ ] Write cron in local time with a prefix: `CRON_TZ=Asia/Riyadh 6 7 * * 0-4`.
@@ -29,11 +29,14 @@ A scheduled task runs unattended in a fresh cloud container. It must be **self-c
 ### Prompt structure (mandatory sections)
 1. **Scope**: the exact source (folder URL or mailbox) and "do not use anything outside it".
 2. **Input selection**: deterministic rules for choosing the latest file, and exclusions such as `~$` files, zero-byte files and wrong extensions.
-3. **Idempotency**: a Processing ID built from file ID, modified time and size, checked against a register sheet before any work. Use the states PROCESSING (with a 60-minute stale lock), SUCCESS, and FAILED (retryable).
+3. **Idempotency**: a Processing ID built from file ID, modified time and size (for RTR queue files, the queue filename such as `B_20261105_1705.json` plus its size), checked against a register sheet before any work. A queue file seen twice must return NO ACTION, never a second commit. Use the states PROCESSING (with a 60-minute stale lock), SUCCESS, and FAILED (retryable).
 4. **Validation**: open and check structure before analysing. On failure, record the exact error and **never send a summary built on bad data**.
-5. **Delivery**: name the channel and recipient explicitly, for example "Email to X with subject Y". "Summary delivered" without a target is a defect.
+5. **Delivery**: name the channel and recipient explicitly, for example "Email to X with subject Y". "Summary delivered" without a target is a defect. Send only when there is something to act on (a SUCCESS summary or a failure). Never email raw JSON or a per-event "script result"; see `rtr-writer-report-email`.
 6. **Outcome codes**: exactly one final status per job, such as `SUCCESS | NO ACTION | RETRY LATER | MISSING | FAILED`, plus the filenames, Processing ID and local timestamp.
 7. **Failure behaviour**: never overwrite good data with empty data, and never invent values. Mark them UNCLEAR or NOT-FOUND with LOW confidence.
+
+### Project scope
+- [ ] The task serves RTR. KSP-RAC is on hold: do not create, re-enable or edit KSP-RAC tasks until the user releases it.
 
 ### Governance
 - [ ] Use the naming convention `<Domain> · <Function> [ACTIVE|PAUSED]`.

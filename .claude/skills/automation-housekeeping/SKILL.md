@@ -37,7 +37,9 @@ Never report a run as "failed" without quoting the exact error line.
 - **SUPERSEDED**: a duplicate name, or an older prompt version of another task. Delete it once you confirm the newer one carries all its logic.
 - **FIRED ONE-SHOT**: `ended_reason = run_once_fired`. These are hidden from the default list. Leave them: deleting one also deletes the sessions it ran in, which can include a live conversation.
 
-Naming convention: `<Domain> · <Function> [STATE]`. For example: `ATP · Daily Report Processor [ACTIVE]`.
+Naming convention: `<Domain> · <Function> [STATE]`. For example: `RTR · T&C Tracker Writer Monitor [ACTIVE]`.
+
+**Project scope rule.** Only RTR (KSIA RTR — ICAD contractor, TABCOMM CxA, Parsons–SAPL) is active. KSP-RAC is **on hold**: classify every KSP-RAC scheduled task as PAUSED or SUPERSEDED, report it, and do not run, edit or re-enable it until the user releases KSP-RAC. Date cut-off for mixed material: anything dated before 25-Sep-2026 is KSP-RAC; from 25-Sep-2026 onward it is RTR.
 
 ## 4. Platform constraints (check these before promising an action)
 
@@ -58,11 +60,15 @@ Keep when ANY of these is true:
 - Its `needs_action` is still the user's open decision. List these in the report.
 - It is the latest session of an active workstream.
 
-## 6. Security sweep
+## 6. Production guard (RTR)
+
+RTR production Power Automate flows (for example **RTR - T&C Tracker Writer (PROD)**), the live T&C tracker and the production Office Scripts are **read-only**. Diagnose and write the fix spec; apply it only after the user gives exact authorising words (for example "Apply the email fix"). Record who operates production for that change.
+
+## 7. Security sweep
 
 Grep every scheduled-task prompt for `token=`, `apikey`, `password`, `Bearer `, and long hex or base64 strings. Any hit is a **finding**: tell the user to rotate the credential and move it to an environment variable or secret.
 
-## 7. Report format (management-ready)
+## 8. Report format (management-ready)
 
 1. **Executive summary**: 3 bullets covering estate health, the critical issue, and the decision needed.
 2. **Actions completed**: a table of item, action, reversible (Y/N).
