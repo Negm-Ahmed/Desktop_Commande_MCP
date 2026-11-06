@@ -46,15 +46,29 @@ Send email fields:
 
 Result: an email is sent only when the script asks for one, or when the run failed. A failure email still carries the raw body for diagnosis.
 
+### Mandatory re-wiring (verified against the 05-Nov-2026 export)
+
+Actual action chain in the PROD flow: `Run_script` → `Send_an_email_(V2)_1` (subject "RTR T&C Writer - batch report") → `Condition_1` (moves the queue file to `done` / `failed`).
+
+`Condition_1` currently runs after `Send_an_email_(V2)_1` **Succeeded**. Once the email sits inside the new gate and is skipped, `Condition_1` would never run and queue files would stay in `inbox` (re-processing risk). Therefore:
+
+| Item | Required setting |
+|---|---|
+| New gate Condition | Run after `Run_script`: is successful, has failed, has timed out |
+| `Send_an_email_(V2)_1` | Inside the gate's **If yes** branch |
+| `Condition_1` (done/failed move) | Run after the **new gate Condition**: is successful, has failed |
+
+Test both paths: a `sendEmail:false` run must still move the file to `done`.
+
 ## 4. Steps for the operator
 
 1. Power Automate → **RTR - T&C Tracker Writer (PROD)** → details page → **Export ▾ → Package (.zip)** named `RTR_Writer_PROD_Backup_<yyyymmdd>`. This ZIP is the rollback point.
 2. Edit → under `Run script`, **+ New step → Condition** → Edit in advanced mode → paste the expression in section 3.
 3. Set the Condition's Run after (section 3).
-4. Drag `Send an email (V2)` into **If yes**.
+4. Drag `Send an email (V2)` into **If yes**. Set `Condition_1` (done/failed move) to run after the new Condition: is successful, has failed.
 5. Replace Subject and Body with the section 3 expressions. Set Is HTML = Yes.
 6. Save. Do not change the script, the tracker or the trigger.
-7. Test: run once with a no-change event. Expect **no** email and a green run. Then run a real batch. Expect **one** formatted email.
+7. Test: run once with a no-change event. Expect **no** email, a green run, and the queue file moved to `done`. Then run a real batch. Expect **one** formatted email.
 8. Record in the change log: date, operator, flow version, test result.
 
 ## 5. Flow B idempotency (open item, confirm before commit = Yes)
