@@ -11,7 +11,7 @@ Project: KSIA RTR (ICAD contractor, TABCOMM CxA, Parsons–SAPL). Production ass
 
 - **RTR - T&C Tracker Writer (PROD)**, the live T&C tracker and the production Office Scripts are **read-only**.
 - Apply this fix only after the user writes the exact words **"Apply the email fix"** and names who operates production (Claude or GPT). Otherwise deliver the steps in section 4 and stop.
-- Before editing: export the flow (Export → Package .zip) as a rollback point and record it.
+- Before editing: take a rollback point. **Version history** is only available for flows stored in a Solution (new designer → Version history; versions are timestamps). The Writer flow is not assumed to be in a Solution, so the rollback point is an **exported package**: flow details page → **Export ▾ → Package (.zip)** → name `RTR_Writer_PROD_Backup_<yyyymmdd>` → Export → keep the ZIP. Record the ZIP name in the change log. To roll back: Import → Package (.zip) → *Update* the existing flow.
 
 ## 1. Symptom
 
@@ -48,7 +48,7 @@ Result: an email is sent only when the script asks for one, or when the run fail
 
 ## 4. Steps for the operator
 
-1. Power Automate → **RTR - T&C Tracker Writer (PROD)** → Export package (rollback).
+1. Power Automate → **RTR - T&C Tracker Writer (PROD)** → details page → **Export ▾ → Package (.zip)** named `RTR_Writer_PROD_Backup_<yyyymmdd>`. This ZIP is the rollback point.
 2. Edit → under `Run script`, **+ New step → Condition** → Edit in advanced mode → paste the expression in section 3.
 3. Set the Condition's Run after (section 3).
 4. Drag `Send an email (V2)` into **If yes**.
