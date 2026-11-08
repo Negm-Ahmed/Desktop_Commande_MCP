@@ -19,9 +19,13 @@ no auto-restart. Any of the following breaks the connector:
 | `uninstall-autostart.ps1` | Removes the task and stops the agent. |
 
 ## Install (once)
+> **If PowerShell says "running scripts is disabled"** when you run `npx`: use `npx.cmd` instead, or allow local scripts for your own user once with
+> `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force`.
+> Run everything from a **normal (non-admin)** PowerShell window.
+
 1. Close every terminal currently running `desktop-commander remote`.
 2. First-time pairing only (skip if the device is already authorized):
-   `npx @wonderwhy-er/desktop-commander@latest remote` → approve in browser → `Ctrl+C`.
+   `npx.cmd @wonderwhy-er/desktop-commander@latest remote` → approve in browser → `Ctrl+C`.
 3. From this folder, in normal PowerShell:
    `powershell -ExecutionPolicy Bypass -File .\install-autostart.ps1`
 4. Delete the stale duplicate `Negm-Lenovo` device (Offline) at https://mcp.desktopcommander.app/ → **Revoke**.
